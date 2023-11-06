@@ -1,0 +1,7 @@
+.httr-oauth
+.Rproj.user
+.Rhistory
+.Rdata
+.DS_Store
+.quarto
+my_credentials.R
