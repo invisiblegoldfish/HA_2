@@ -5,7 +5,7 @@ library(tidyverse) # import basic function
 library(spotifyr) # import spotify api wrapper
 library(haven)  # import spss function
 
-# set credentials
+# load my credentials
 
 source("my_credentials.r")
 
