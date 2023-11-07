@@ -1,0 +1,1 @@
+pull_artist_info(recent_tracks$artist.s.id, passport),

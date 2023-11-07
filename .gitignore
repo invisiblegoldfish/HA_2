@@ -5,3 +5,6 @@
 .DS_Store
 .quarto
 my_credentials.R
+*.rds
+*.zip
+git_setup.R
