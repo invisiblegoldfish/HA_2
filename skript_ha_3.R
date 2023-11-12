@@ -15,10 +15,9 @@ source("spotify_augment.R", encoding="UTF-8")
 ##### MAIN
 
 ##read rds files (datasets)
-#recent_tracks<-readRDS("my_recent_tracks_2023-11-06.rds")
-recent_tracks<-readRDS("my_recent_tracks.rds")
-top_tracks<-readRDS("my_fav_tracks_2023-11-06.rds")
-top_artists<-readRDS("fav_artists_par_2023-11-06.rds")
+recent_tracks<-readRDS("my_recent_tracks_2023-11-12.rds")
+top_tracks<-readRDS("my_fav_tracks_2023-11-12.rds")
+top_artists<-readRDS("fav_artists_par_2023-11-12.rds")
 
 
 ##unnest artists in tracklists
