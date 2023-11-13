@@ -22,7 +22,7 @@ pull_album_infos<-function(albumidvector,pass){
   albuminfos$release_year<-substr(albuminfos$release_date,1,4) %>% as.integer()
   albuminfos$release_date<-as.Date(albuminfos$release_date,"%Y-%m-%d")
   albuminfos<-select(albuminfos,
-                     album.s.id=id,
+                     album.s.id=id,   #bereits in own_data_download.R enthalten
                      album.s.type=album_type,
                      album.s.label=label,
                      album.s.popularity=popularity,
@@ -50,8 +50,8 @@ pull_track_infos<-function(trackidvector, pass){
     if (anfang>length(trackidvector)) {break}
   }
   trackinfos<-select(trackinfos,
-                     track.s.id=id, 
-                     track.s.title=name, 
+                     track.s.id=id,  #bereits in own_data_download.R enthalten  
+                     track.s.title=name, #bereits in own_data_download.R enthalten
                      track.s.popularity=popularity, 
                      track.s.albumPosition=track_number, 
                      track.s.explicit=explicit, 
@@ -60,7 +60,7 @@ pull_track_infos<-function(trackidvector, pass){
 }
 
 
-pull_artist_info<-function(artistidvector,pass){
+pull_artist_infos<-function(artistidvector,pass){
   cat('Pull Artist Infos','\n')
   visa<-connect_spotify(pass) # connect with API
   artistinfos<-c()
@@ -74,13 +74,20 @@ pull_artist_info<-function(artistidvector,pass){
     anfang<-anfang+stepsize
     if (anfang>length(artistidvector)) {break}
   }
-  artistinfos$genre <- sapply(artistinfos$genres , "[", 1)
+  cat('Write Artist Infos','\n')
+  
+  artistinfos$topGenre <- sapply(artistinfos$genres , "[", 1) # assuming that the first called element is the top genre.
+                                                              # further classifacation needs access to other music-info-libary like musicbrainz
+                                                              # which is not provided here at this point.
   artistinfos<-select(artistinfos,
-                      id,
-                      name,
-                      popularity,
-                      followers.total,
-                      genre)
+                      artist.s.id=id,
+                      artist.s.name=name,
+                      artist.s.popularity=popularity,
+                      artist.s.followers=followers.total,
+                      artist.s.genres=genres,
+                      artist.s.topGenre=topGenre
+                      )
+                    
   return(artistinfos)
 }
 
@@ -110,17 +117,22 @@ pull_audio_features<-function(trackidvector,pass){
         }
       )
     }
+    cat('Write Audio Features','\n')
     audiofeatures<-rbind(audiofeatures,ergebnis)
     anfang<-anfang+stepsize
     if (anfang>length(trackidvector)) {break}
   }
+  
+  audiofeatures$duration_s<-audiofeatures$duration_ms/1000 %>% as.double()
+  
   audiofeatures<-select(audiofeatures,
-                        #track.s.id=id,
+                        track.s.id=id,
                         track.s.key=key,
                         track.s.loudness=loudness,
                         track.s.mode=mode,
                         track.s.tempo=tempo,
-                        track.s.duration=duration_ms,
+                        track.s.duration=duration_s,
+                        track.s.duration_ms=duration_ms,
                         track.s.time_signature=time_signature,
                         track.s.danceability=danceability,
                         track.s.energy=energy,
