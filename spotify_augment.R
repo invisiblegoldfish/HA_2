@@ -3,8 +3,10 @@
 source("wrapper_extensions.R", encoding="UTF-8")
 
 
-pull_album_infos<-function(albumidvector,apitoken){
-  visa<-connect_spotify(apitoken) # connect with API
+
+pull_album_infos<-function(albumidvector,pass){
+  cat('Pull Album Infos','\n')
+  visa<-connect_spotify(pass) # connect with API
   albuminfos<-c()
   anfang<-1
   stepsize<-10
@@ -16,15 +18,26 @@ pull_album_infos<-function(albumidvector,apitoken){
     anfang<-anfang+stepsize
     if (anfang>length(albumidvector)) {break}
   }
+  cat('Write Album Infos','\n')
   albuminfos$release_year<-substr(albuminfos$release_date,1,4) %>% as.integer()
   albuminfos$release_date<-as.Date(albuminfos$release_date,"%Y-%m-%d")
-  albuminfos<-select(albuminfos,id,album_type,label, popularity,album.s.upc=external_ids.upc,tracks.total,release_date,release_year )
+  albuminfos<-select(albuminfos,
+                     album.s.id=id,
+                     album.s.type=album_type,
+                     album.s.label=label,
+                     album.s.popularity=popularity,
+                     album.s.upc=external_ids.upc,
+                     album.s.total_tracks=tracks.total,
+                     album.s.release_date=release_date,
+                     album.s.release_year=release_year
+                     )
   return(albuminfos)
 }
 
 
-pull_track_infos<-function(trackidvector, apitoken){
-  visa<-connect_spotify(apitoken) # connect with API
+pull_track_infos<-function(trackidvector, pass){
+  cat('Pull Track Infos','\n')
+  visa<-connect_spotify(pass) # connect with API
   trackinfos<-c()
   anfang<-1
   stepsize<-10
@@ -36,9 +49,126 @@ pull_track_infos<-function(trackidvector, apitoken){
     anfang<-anfang+stepsize
     if (anfang>length(trackidvector)) {break}
   }
-  trackinfos<-select(trackinfos,id, name, popularity, track_number, explicit, external_ids.isrc)
+  trackinfos<-select(trackinfos,
+                     track.s.id=id, 
+                     track.s.title=name, 
+                     track.s.popularity=popularity, 
+                     track.s.albumPosition=track_number, 
+                     track.s.explicit=explicit, 
+                     track.s.isrc=external_ids.isrc)
   return(trackinfos)
 }
+
+
+pull_artist_info<-function(artistidvector,pass){
+  cat('Pull Artist Infos','\n')
+  visa<-connect_spotify(pass) # connect with API
+  artistinfos<-c()
+  anfang<-1
+  stepsize<-10
+  repeat {
+    ende<-min(c(anfang+stepsize-1,length(artistidvector)))
+    cat("Getting artist infos for track",anfang,"-",ende,"\n")
+    ergebnis<-get_artists(artistidvector[anfang:ende],authorization=visa)
+    artistinfos<-rbind(artistinfos,ergebnis)
+    anfang<-anfang+stepsize
+    if (anfang>length(artistidvector)) {break}
+  }
+  artistinfos$genre <- sapply(artistinfos$genres , "[", 1)
+  artistinfos<-select(artistinfos,
+                      id,
+                      name,
+                      popularity,
+                      followers.total,
+                      genre)
+  return(artistinfos)
+}
+
+
+pull_audio_features<-function(trackidvector,pass){
+  cat('Pull Audio Features','\n')
+  visa<-connect_spotify(pass) # connect with API
+  audiofeatures<-c()
+  anfang<-1
+  stepsize<-10
+  repeat {
+    ende<-min(c(anfang+stepsize-1,length(trackidvector)))
+    cat("Getting audio features for track",anfang,"-",ende,"\n")
+    repeat {
+      tryCatch(
+        expr = {
+          ergebnis<-get_track_audio_features(trackidvector[anfang:ende],authorization=visa)
+          break},
+        error = function(e){
+          cat('Web access failure:',as.character(e))
+          cat('waiting 3 seconds, then trying again..','\n')
+          Sys.sleep(3)
+        },
+        warning = function(w){
+          cat('Web access warning:',w)
+          break;
+        }
+      )
+    }
+    audiofeatures<-rbind(audiofeatures,ergebnis)
+    anfang<-anfang+stepsize
+    if (anfang>length(trackidvector)) {break}
+  }
+  audiofeatures<-select(audiofeatures,
+                        #track.s.id=id,
+                        track.s.key=key,
+                        track.s.loudness=loudness,
+                        track.s.mode=mode,
+                        track.s.tempo=tempo,
+                        track.s.duration=duration_ms,
+                        track.s.time_signature=time_signature,
+                        track.s.danceability=danceability,
+                        track.s.energy=energy,
+                        track.s.valence=valence,
+                        track.s.speechiness=speechiness,
+                        track.s.acousticness=acousticness,
+                        track.s.instrumentalness=instrumentalness,
+                        track.s.liveness=liveness)
+  return(audiofeatures)
+}
+
+
+
+
+# unnest column track.s.artist
+
+expand_spotify_artists<-function(trackframe){
+  trackframe<-unnest_legacy(trackframe,track.s.artists,.preserve=track.s.artists) # warum behalten wir die Varialbe?
+  trackframe$track.s.firstartist.name<-trackframe$name
+  return(trackframe)
+}
+
+
+
+#stand 12.11.23, 23:00
+#pull_artist_infol<-function(artistidvector,pass){
+#  cat('Pull Artist Infos','\n')
+#  visa<-connect_spotify(pass) # connect with API
+#  artistinfos<-c()
+#  anfang<-1
+#  stepsize<-10
+#  repeat {
+#    ende<-min(c(anfang+stepsize-1,length(artistidvector)))
+#    cat("Getting artist infos for track",anfang,"-",ende,"\n")
+#    ergebnis<-get_artists(artistidvector[anfang:ende],authorization=visa)
+#    artistinfos<-rbind(artistinfos,ergebnis)
+#    anfang<-anfang+stepsize
+#    if (anfang>length(artistidvector)) {break}
+#  }
+#  artistinfos$genre <- sapply(artistinfos$genres , "[", 1)
+#  artistinfos<-select(artistinfos,
+#                      id,
+#                      name,
+#                      popularity,
+#                      followers.total,
+#                      genre)
+#  return(artistinfos)
+#}
 
 
 #pull_album_infos<-function(albumidvector,apitoken){
@@ -127,66 +257,3 @@ pull_track_infos<-function(trackidvector, apitoken){
 #     return(trackinfos)
 #   }
 # }
-
-
-pull_artist_infos<-function(artistidvector,apitoken){
-  visa<-connect_spotify(apitoken) # connect with API
-  artistinfos<-c()
-  anfang<-1
-  stepsize<-10
-  repeat {
-    ende<-min(c(anfang+stepsize-1,length(artistidvector)))
-    cat("Getting artist infos for track",anfang,"-",ende,"\n")
-    ergebnis<-get_artists(artistidvector[anfang:ende],authorization=visa)
-    artistinfos<-rbind(artistinfos,ergebnis)
-    anfang<-anfang+stepsize
-    if (anfang>length(artistidvector)) {break}
-  }
-  artistinfos$genre <- sapply(artistinfos$genres , "[", 1)
-  artistinfos<-select(artistinfos, id, name, popularity, followers.total, genre)
-  return(artistinfos)
-}
-
-
-
-pull_audio_features<-function(trackidvector,apitoken){
-  visa<-connect_spotify(apitoken) # connect with API
-  audiofeatures<-c()
-  anfang<-1
-  stepsize<-10
-  repeat {
-    ende<-min(c(anfang+stepsize-1,length(trackidvector)))
-    cat("Getting audio features for track",anfang,"-",ende,"\n")
-    repeat {
-      tryCatch(
-        expr = {
-          ergebnis<-get_track_audio_features(trackidvector[anfang:ende],authorization=visa)
-          break},
-        error = function(e){
-          cat('Web access failure:',as.character(e))
-          cat('waiting 3 seconds, then trying again..','\n')
-          Sys.sleep(3)
-        },
-        warning = function(w){
-          cat('Web access warning:',w)
-          break;
-        }
-      )
-    }
-    audiofeatures<-rbind(audiofeatures,ergebnis)
-    anfang<-anfang+stepsize
-    if (anfang>length(trackidvector)) {break}
-  }
-  audiofeatures<-select(audiofeatures, id, key, loudness, mode, tempo, duration_ms, time_signature, danceability, energy, valence, speechiness, acousticness, instrumentalness, liveness)
-  return(audiofeatures)
-}
-
-
-
-# unnest column track.s.artist
-
-expand_spotify_artists<-function(trackframe){
-  trackframe<-unnest_legacy(trackframe,track.s.artists,.preserve=track.s.artists) # warum behalten wir die Varialbe?
-  trackframe$track.s.firstartist.name<-trackframe$name
-  return(trackframe)
-}
