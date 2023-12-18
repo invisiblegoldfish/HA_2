@@ -19,18 +19,25 @@ short_tracks<-short_tracks %>% distinct(track.s.id,.keep_all=T)
 
 
 ##berechnung desktriptoren der metrischen features
-metric_feature_des<-descriptives(short_tracks,vars=c("track.s.energy",
-                                 "track.s.valence",
-                                 "track.s.danceability",
-                                 "track.s.tempo",
-                                 "track.s.liveness",
-                                 "track.s.instrumentalness",
-                                 "track.s.speechiness",
-                                 "track.s.duration_ms",
-                                 "track.s.acousticness",
-                                 "track.s.key",
-                                 "track.s.mode",
-                                 "track.s.loudness"),
+metric_feature_des<-descriptives(short_tracks,vars=c("track.s.popularity",
+                                                     "track.s.duration_ms",
+                                                     "track.s.albumPosition",
+                                                     "track.s.danceability",
+                                                     "track.s.energy",
+                                                     "track.s.loudness",
+                                                     "track.s.speechiness",
+                                                     "track.s.acousticness",
+                                                     "track.s.instrumentalness",
+                                                     "track.s.liveness",
+                                                     "track.s.valence",
+                                                     "track.s.tempo",
+                                                     "album.s.total_tracks",
+                                                     "album.s.release_year",
+                                                     "album.s.popularity",
+                                                     "artist.s.popularity",
+                                                     "artist.s.followers",
+                                                     "artist.mb.birthyear",
+                                                     "artist.mb.deathyear"),
              hist=T, iqr=T,skew=T,kurt=T,dens=T)
 
 ##berechnung desktriptoren der nominalen features
