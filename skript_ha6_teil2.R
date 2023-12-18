@@ -83,14 +83,12 @@ highest_positions_obj<- highest_positions %>%
   pivot_longer(cols=c("PopBestEntry","RockBestEntry","RapBestEntry"),
                names_to="feature")
 
-ggplot(data=highest_positions_obj,aes(x=track.s.chartsDate,y=value,color=feature))+
-  geom_line()+
-  geom_smooth(method="loess",span=.5,size=2,se=F)
 
-ggplot(data=highest_positions_obj, aes(x=track.s.chartsDate, y=value, color=feature)) +
+ggplot(data=highest_positions_obj, aes(x=track.s.chartsDate, y=value, colour=feature)) +
   geom_line() +
-  geom_smooth(method="loess", span=.5, size=2, se=FALSE) +
-  labs(x="Date" ,y = "Chart Entry")  # Renaming the y-axis
+  geom_smooth(method="loess", span=.5, linetype="dashed", se=FALSE) +
+  labs(title="Spotify German Daily Top 200 Charts 2017-2023: Highest Placed Pop/Rap/Rock Songs by Date",
+       subtitle=paste0("n = ",nrow(highest_positions_obj)),x="Date",y="Highest Chart Place in Genre")
 
 
 ######################### Nominaltrends
