@@ -24,9 +24,9 @@ source("own_data_download.R", encoding="UTF-8")
 
 
 ##read rds files (datasets)
-recent_tracks<-readRDS("my_recent_tracks_2023-11-14.rds")
-top_tracks<-readRDS("my_top_tracks_2023-11-14.rds")
-top_artists<-readRDS("my_top_artists_2023-11-14.rds")
+recent_tracks<-readRDS("saved_data/my_recent_tracks_2023-12-04.rds")
+top_tracks<-readRDS("saved_data/my_top_tracks_2023-12-04.rds")
+top_artists<-readRDS("saved_data/my_top_artists_2023-12-04.rds")
 
 
 
@@ -78,11 +78,11 @@ top_tracks_unnested_augmented<-cbind(top_tracks_unnested,
 
 
 #saving datasets:
-write_rds(recent_tracks_augmented, paste0("a_my_recent_tracks_", Sys.Date(), ".rds"))
-write_rds(top_tracks_augmented, paste0("a_my_top_tracks_", Sys.Date(), ".rds"))
-write_rds(top_artists_augmented, paste0("a_my_top_artists_", Sys.Date(), ".rds"))
-write_rds(top_tracks_unnested_augmented, paste0("ua_my_top_tracks_", Sys.Date(), ".rds"))
-write_rds(recent_tracks_unnested_augmented, paste0("ua_my_recent_tracks_", Sys.Date(), ".rds"))
+write_rds(recent_tracks_augmented, paste0("saved_data/a_my_recent_tracks_", Sys.Date(), ".rds"))
+write_rds(top_tracks_augmented, paste0("saved_data/a_my_top_tracks_", Sys.Date(), ".rds"))
+write_rds(top_artists_augmented, paste0("saved_data/a_my_top_artists_", Sys.Date(), ".rds"))
+write_rds(top_tracks_unnested_augmented, paste0("saved_data/ua_my_top_tracks_", Sys.Date(), ".rds"))
+write_rds(recent_tracks_unnested_augmented, paste0("saved_data/ua_my_recent_tracks_", Sys.Date(), ".rds"))
 
 
 

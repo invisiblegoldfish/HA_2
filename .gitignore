@@ -8,3 +8,6 @@ my_credentials.R
 *.rds
 *.zip
 git_setup.R
+HA_5
+_MACOSX
+saved_data
