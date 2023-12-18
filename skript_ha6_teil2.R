@@ -84,7 +84,7 @@ highest_positions_obj<- highest_positions %>%
                names_to="feature")
 
 
-ggplot(data=highest_positions_obj, aes(x=track.s.chartsDate, y=value, colour=feature)) +
+highest_positions_plot <- ggplot(data=highest_positions_obj, aes(x=track.s.chartsDate, y=value, colour=feature)) +
   geom_line() +
   geom_smooth(method="loess", span=.5, linetype="dashed", se=FALSE) +
   labs(title="Spotify German Daily Top 200 Charts 2017-2023: Highest Placed Pop/Rap/Rock Songs by Date",
