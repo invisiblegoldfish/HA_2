@@ -10,42 +10,48 @@ library(countrycode) # import ISO countrycode functions
 library(ggplot2) # import plot_functionality
 
 de_tracks<-readRDS("germanDailySpotify_full_mb_artistbased.rds")
-de_tracks_verysmall <- de_tracks %>% head(n=100)
 
 
 ############ Trendgrafiken
 
 #metrisches Feature: streamCound und dessen Log für Übersichtlichkeit
-de_tracks$track.s.streamCountLOG <- log(de_tracks$track.s.streamCount + 1)
-
 trends_mean<-de_tracks %>%
   group_by(track.s.chartsDate) %>%
-  summarise_at(c("track.s.energy","track.s.valence","track.s.danceability","track.s.tempo","track.s.streamCount","track.s.streamCountLOG"),
+  summarise_at(c("track.s.energy","track.s.valence","track.s.danceability","track.s.tempo","track.s.streamCount"),
                list(average=~mean(.x,na.rm=T),upper=~mean(.x,na.rm=T)+sd(.x,na.rm=T),
                     lower=~mean(.x,na.rm=T)-sd(.x,na.rm=T),
                     min=~min(.x),max=~max(.x))) %>%
   ungroup()
 
 
-
-ggplot(data=trends_mean,aes(x=track.s.chartsDate))+
-  geom_line(aes(y=track.s.streamCount_average),size=0.5)+
-  geom_line(aes(y=track.s.streamCount_min),linetype="dotted")+
-  geom_line(aes(y=track.s.streamCount_max),linetype="dotted")+
+stream_count_plot <- ggplot(data=trends_mean,aes(x=track.s.chartsDate))+
+  geom_line(aes(y=track.s.streamCount_average, linetype = "average"),size=0.5)+
+  geom_line(aes(y=track.s.streamCount_min, linetype = "min"))+
+  geom_line(aes(y=track.s.streamCount_max, linetype = "max"))+
   geom_ribbon(aes(ymin=track.s.streamCount_lower,ymax=track.s.streamCount_upper),alpha=0.1)+
   scale_x_date(expand=c(0,15),date_minor_breaks = "month")+
-  labs(y="No of Streams",x="date")
+  labs(title="Spotify German Daily Charts 2017-2023: Streams per Day",
+       subtitle = paste0("n=",nrow(trends_mean)," time points"),
+       y="No of Streams",x="date") +
+  guides(linetype=guide_legend(title="Daily Streams"))
+stream_count_plot
+ggsave("stream_count_trend_plot.png")
 
-ggplot(data=trends_mean,aes(x=track.s.chartsDate))+
-  geom_line(aes(y=track.s.streamCountLOG_average),size=0.5)+
-  geom_line(aes(y=track.s.streamCountLOG_min),linetype="dotted")+
-  geom_line(aes(y=track.s.streamCountLOG_max),linetype="dotted")+
-  geom_ribbon(aes(ymin=track.s.streamCountLOG_lower,ymax=track.s.streamCountLOG_upper),alpha=0.1)+
+stream_count_log_plot <- ggplot(data=trends_mean,aes(x=track.s.chartsDate))+
+  geom_line(aes(y=track.s.streamCount_average, linetype = "average"),size=0.5)+
+  geom_line(aes(y=track.s.streamCount_min, linetype = "min"))+
+  geom_line(aes(y=track.s.streamCount_max, linetype = "max"))+
+  geom_ribbon(aes(ymin=track.s.streamCount_lower,ymax=track.s.streamCount_upper),alpha=0.1)+
+  scale_y_continuous(trans='log10') +
   scale_x_date(expand=c(0,15),date_minor_breaks = "month")+
-  labs(y="No of Streams (LOG)",x="date")
+  labs(title="Spotify German Daily Charts 2017-2023: Streams per Day",
+       subtitle = paste0("n=",nrow(trends_mean)," time points"),
+       y="No of Streams",x="date") +
+  guides(linetype=guide_legend(title="Daily Streams"))
+stream_count_log_plot
+ggsave("stream_count_log_trend_plot.png")
 
 ##non parametrisches Feature: höchste Chartposition jeweils des Genres: Pop,Rock, Rap (und subgenres)
-
 
 # nach Genre vorfiltern
 de_tracks_pop <- de_tracks %>%
@@ -60,13 +66,11 @@ de_tracks_rap$artist.s.topGenre <- "Rap"
 
 de_vorauswahl<-rbind(de_tracks_pop,de_tracks_rock,de_tracks_rap)
 de_vorauswahl <- de_vorauswahl %>%arrange(track.s.chartsDate)
-de_vorauswahl_small <-  de_vorauswahl %>% head(n=100)
 
 
 # calculate best entry for each genre
 highest_positions <- aggregate(track.s.chartPos ~ track.s.chartsDate + artist.s.topGenre, data = de_vorauswahl, min)
 highest_positions <- highest_positions %>%arrange(track.s.chartsDate)
-highest_positions_small <-  highest_positions %>% head(n=100)
 
 highest_positions <- highest_positions %>% # combine 3 rows per date into 1 row per date with 3 genre collumns
   # First, we'll spread the entries to wide format based on genre
@@ -77,7 +81,6 @@ highest_positions <- highest_positions %>% # combine 3 rows per date into 1 row 
   group_by(track.s.chartsDate) %>%
   summarize(across(everything(), ~ .[1]))
 
-highest_positions_small <-  highest_positions %>% head(n=100)
 
 highest_positions_obj<- highest_positions %>%
   pivot_longer(cols=c("PopBestEntry","RockBestEntry","RapBestEntry"),
@@ -89,7 +92,8 @@ highest_positions_plot <- ggplot(data=highest_positions_obj, aes(x=track.s.chart
   geom_smooth(method="loess", span=.5, linetype="dashed", se=FALSE) +
   labs(title="Spotify German Daily Top 200 Charts 2017-2023: Highest Placed Pop/Rap/Rock Songs by Date",
        subtitle=paste0("n = ",nrow(highest_positions_obj)),x="Date",y="Highest Chart Place in Genre")
-
+highest_positions_plot
+ggsave("highest_positions_in_genre_trend_plot.png")
 
 ######################### Nominaltrends
 
@@ -112,3 +116,4 @@ trendchart_gender<-ggplot(data=trends_gender,aes(x=track.s.chartsDate,y=perc,fil
   labs(title="Spotify German Daily Charts 2017-2023: Artist Gender Across Time", x="date", y="percentage", fill="Gender",
        subtitle=paste0("n=",nrow(trends_mean)," time points, relative frequencies within 200 tracks per observation (=day)"))
 trendchart_gender
+ggsave("gender_trend_plot.png")

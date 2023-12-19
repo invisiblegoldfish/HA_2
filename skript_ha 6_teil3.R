@@ -28,3 +28,4 @@ top_ten_artists<-select(top_ten_artists,"Artist"=artist.s.name,"Days in Charts"=
 tabelle <- flextable(top_ten_artists, col_keys = c("Artist", "Days in Charts"))#build table
 
 save_as_html(tabelle,path="top_ten_artists.html") #safe table as .html
+
